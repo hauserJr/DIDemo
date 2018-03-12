@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
+using System.Reflection;
 
 namespace DIDemo
 {
@@ -10,27 +12,49 @@ namespace DIDemo
             string Call(string Num);
         }
 
+        //public class People
+        //{
+        //    private readonly Func<Type, IPhone> phoneFactory;
+        //    private IPhone _phone;
+        //    public People(IPhone phone) => this._phone = phone;
+
+        //    public void Use<TPhone>(Action<IPhone> config)
+        //        where TPhone : class, IPhone
+        //    {
+        //        config(this._phone);
+        //    }
+        //}
         public class People
         {
+            private readonly Func<Type, IPhone> phoneFactory;
             private IPhone _phone;
-            public People(IPhone phone) => this._phone = phone;
 
-            public void Use<TPhone>(Action<IPhone> config)
+            public People(Func<Type, IPhone> phoneFactory)
+            {
+                this.phoneFactory = phoneFactory;
+            }
+
+            public void Use<TPhone>(Action<IPhone> config) 
                 where TPhone : class, IPhone
             {
+                _phone = phoneFactory(typeof(TPhone));
                 config(this._phone);
             }
         }
-
         static void Main(string[] args)
         {
-            ServiceProvider provider = new ServiceCollection()
-                                    .AddSingleton<IPhone, iphone5S>()
-                                    .AddSingleton<IPhone, iphone4S>()
-                                    .AddSingleton<People>()
-                                    .BuildServiceProvider();
+            var services = new ServiceCollection();
+            services.AddSingleton<People>()
+                .AddTransient(factory => (Func<Type, IPhone>)(type => (IPhone)factory.GetService(type)));
 
-            provider.GetService<People>().Use<IPhone>(phone => phone.Call("123456"));
+            foreach (var iphoneType in Assembly.GetExecutingAssembly().GetTypes()
+                .Where(t => !t.IsAbstract && typeof(IPhone).IsAssignableFrom(t)))
+            {
+                services.AddTransient(iphoneType);
+            }
+
+            var provider = services.BuildServiceProvider();
+            provider.GetService<People>().Use<iphone4S>(phone => phone.Call("123456"));
             Console.ReadLine();
         }
 
