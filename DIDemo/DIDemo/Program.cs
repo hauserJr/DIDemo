@@ -11,19 +11,6 @@ namespace DIDemo
         {
             string Call(string Num);
         }
-
-        //public class People
-        //{
-        //    private readonly Func<Type, IPhone> phoneFactory;
-        //    private IPhone _phone;
-        //    public People(IPhone phone) => this._phone = phone;
-
-        //    public void Use<TPhone>(Action<IPhone> config)
-        //        where TPhone : class, IPhone
-        //    {
-        //        config(this._phone);
-        //    }
-        //}
         public class People
         {
             private readonly Func<Type, IPhone> phoneFactory;
